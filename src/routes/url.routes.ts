@@ -7,9 +7,9 @@ const urlRouter = express.Router()
 
 urlRouter.post("/shorten", authenticateToken, shortenUrl);
 
-urlRouter.get("/:shortCode", redirectToOriginal);
+urlRouter.get("short/:shortCode", redirectToOriginal);
 
-urlRouter.get("/geturls", authenticateToken, getUserUrls);
+urlRouter.get("/urls", authenticateToken, getUserUrls);
 
 urlRouter.post("/invalidate/:shortCode", authenticateToken, invalidateUrl);
 

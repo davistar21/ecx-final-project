@@ -31,7 +31,7 @@ export const shortenUrl = async (req: AuthRequest, res: Response, next: NextFunc
     const newUrl = await UrlModel.create({
       userId,
       originalUrl,
-      shortUrl: `https://www.jdjdj/${shortCode}`,
+      shortUrl: `https://www.google.com/${shortCode}`,
       isValid: true,
     })
     return res.status(201).json({
@@ -45,17 +45,14 @@ export const shortenUrl = async (req: AuthRequest, res: Response, next: NextFunc
 
 export const redirectToOriginal = async (req: Request, res: Response) => {
   try {
-    const { shortCode } = req.params; // Extract the shortCode from the URL
+    const { shortCode } = req.params;
 
-    // Find the corresponding original URL in the database
     const existingUrl = await UrlModel.findOne({ shortCode });
 
-    // If no record is found or it's invalid, return an error
     if (!existingUrl || !existingUrl.isValid) {
       return res.status(404).json({ message: "Shortened URL not found or invalid" });
     }
 
-    // Redirect to the original URL
     return res.redirect(existingUrl.originalUrl);
   } catch (error) {
     console.error("Error in redirectToOriginal:", error);
@@ -65,14 +62,16 @@ export const redirectToOriginal = async (req: Request, res: Response) => {
 
 export const getUserUrls = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id; // Extract user ID from authentication middleware
-
-    // Find all URLs belonging to this user
+    const userId = req.user?.id; 
+    console.log(userId);
     const urls = await UrlModel.find({ userId });
+    if (!urls) {
+      throw new Error('Cannot get urls.')
+    }
 
     return res.json({
       success: true,
-      data: urls, // Send back the list of URLs
+      data: urls,
     });
   } catch (error) {
     console.error("Error in getUserUrls:", error);
@@ -82,21 +81,20 @@ export const getUserUrls = async (req: AuthRequest, res: Response) => {
 
 export const invalidateUrl = async (req: AuthRequest, res: Response) => {
   try {
-    const { shortCode } = req.params; // Extract shortCode from request
-    const userId = req.user?.id; // Extract user ID
+    const { shortCode } = req.params; 
+    const userId = req.user?.id;
 
-    // Find the URL that matches the shortCode and belongs to the user
-    const urlRecord = await UrlModel.findOne({ shortCode, userId });
+    const url = await UrlModel.findOne({ shortCode, userId });
+    console.log(url)
 
-    if (!urlRecord) {
+    if (!url) {
       return res.status(404).json({ message: "URL not found or does not belong to you" });
     }
 
-    // Mark the URL as invalid
-    urlRecord.isValid = false;
-    await urlRecord.save();
+    url.isValid = false;
+    await url.save();
 
-    return res.json({ message: "URL has been invalidated" });
+    return res.json({ message: "URL has been invalidated" , data: url});
   } catch (error) {
     console.error("Error in invalidateUrl:", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -105,10 +103,9 @@ export const invalidateUrl = async (req: AuthRequest, res: Response) => {
 
 export const deleteUrl = async (req: AuthRequest, res: Response) => {
   try {
-    const { shortCode } = req.params; // Extract shortCode from request
-    const userId = req.user?.id; // Extract user ID
+    const { shortCode } = req.params; 
+    const userId = req.user?.id; 
 
-    // Find and delete the URL only if it belongs to the user
     const result = await UrlModel.findOneAndDelete({ shortCode, userId });
 
     if (!result) {
