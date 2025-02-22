@@ -1,3 +1,4 @@
+import { NextFunction, Request, Response } from "express";
 import joi from "joi";
 // import { Request, Response, NextFunction } from "express";
 
@@ -13,6 +14,19 @@ export const loginSchema = joi.object({
 })
 
 
+export const validateParams = (schema: joi.ObjectSchema) => {
+  return (req:Request, res:Response, next:NextFunction) => {
+    const {error} = schema.validate(req.params);
+    if (error){
+      return res.status(400).json({message: error.details[0].message})
+    }
+    next()
+  }
+}
+
+export const urlParamsSchema = joi.object({
+  shortCode: joi.string().required()
+})
 // export const validateParams = (schema: joi.ObjectSchema) => {
 //    return (req: Request, res: Response, next: NextFunction)  => {
 //     const {error} = schema.validate(req.params);
